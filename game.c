@@ -11,7 +11,7 @@ bool continue_to_play = true;
 
 void init(void);
 bool game(void);
-void clear_screen(void);
+void check_cheat(void);
 void initialize_borders(unsigned *borders);
 void update_borders(unsigned *borders, unsigned score);
 void moov_cursor(int key, unsigned *x_pos, unsigned *borders);
@@ -25,7 +25,7 @@ int main() {
         if(!will_to_continue) {
             continue_to_play = false;
         } else {
-            clear_screen();
+            erase();
             speed = 5000;
             width = COLS/5;
         }    
@@ -42,13 +42,7 @@ void init(void) {
     start_color();
     use_default_colors();
 
-    if(COLS > 190) {
-        endwin();
-        printf("Stop trying to cheat!\n");
-        printf("To play, please zoom in using ctrl + <3\n");
-        printf("Currently trying to display %d/190 columns.\n", COLS);
-        exit(0);
-    }
+    check_cheat();
 
     // refer to terminal colors
     init_pair(1, 2, -1);
@@ -61,6 +55,7 @@ void init(void) {
 }
 
 bool game(void) {
+    check_cheat();
     timeout(0);
     unsigned long score = 0;
 
@@ -120,12 +115,23 @@ bool game(void) {
 }
 
 void initialize_borders(unsigned *borders) {
-    attron(COLOR_PAIR(2));
-    for(unsigned long i = 0; i < (unsigned)LINES; i++) {
-        borders[i] = COLS/2 - width/2;
+    borders[LINES - 1] = COLS/2 - width/2;
 
-        mvaddch(i, COLS/2 - width/2, ACS_BLOCK);
-        mvaddch(i, COLS/2 + width/2, ACS_BLOCK);
+    for(int i = LINES - 2; i >= 0; i--) {
+        borders[i] = borders[i + 1]; 
+
+        int rdn = rand() % 3;
+        if(rdn == 1 && borders[i] + width < (unsigned)(COLS - 1)) {
+            borders[i]++;
+        } else if(rdn == 2 && borders[i] > 0) {
+            borders[i]--;
+        }
+    }
+
+    attron(COLOR_PAIR(2));
+    for(int i = 0; i < LINES; i++) {
+        mvaddch(i, borders[i], ACS_BLOCK);
+        mvaddch(i, borders[i] + width, ACS_BLOCK);
     }
     attroff(COLOR_PAIR(2));
 }
@@ -175,12 +181,12 @@ void moov_cursor(int key, unsigned *x_pos, unsigned *borders) {
         }
 }
 
-void clear_screen(void) {
-    for(int i = 0; i < LINES; i++) {
-        for(int j = 0; j < COLS; j++) {
-            attron(COLOR_PAIR(1));
-            mvaddch(i, j, ' ');
-            attroff(COLOR_PAIR(1));
-        }
+void check_cheat(void) {
+    if(COLS > 190) {
+        endwin();
+        printf("Stop trying to cheat!\n");
+        printf("To play, please zoom in using ctrl + <3\n");
+        printf("Currently trying to display %d/190 columns.\n", COLS);
+        exit(0);
     }
 }
