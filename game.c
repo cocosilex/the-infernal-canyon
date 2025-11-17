@@ -6,18 +6,32 @@
 
 unsigned width = 30;
 unsigned speed = 5000;
-bool running = true;
+bool continue_to_play = true;
+
 
 void init(void);
-void game(void);
+bool game(void);
+void clear_screen(void);
 void initialize_borders(unsigned *borders);
-void update_borders(unsigned *borders);
+void update_borders(unsigned *borders, unsigned score);
 void moov_cursor(int key, unsigned *x_pos, unsigned *borders);
 
 int main() {
     setlocale(LC_ALL, "");
     init();
-    game();
+
+    while (continue_to_play) {
+        bool will_to_continue = game();
+        if(!will_to_continue) {
+            continue_to_play = false;
+        } else {
+            clear_screen();
+            speed = 5000;
+            width = COLS/5;
+        }    
+    }
+
+    endwin();
     return 0;
 }
 
@@ -25,9 +39,16 @@ void init(void) {
     initscr(); 
     noecho();
     curs_set(0);
-    timeout(0);
     start_color();
     use_default_colors();
+
+    if(COLS > 190) {
+        endwin();
+        printf("Stop trying to cheat!\n");
+        printf("To play, please zoom in using ctrl + <3\n");
+        printf("Currently trying to display %d/190 columns.\n", COLS);
+        exit(0);
+    }
 
     // refer to terminal colors
     init_pair(1, 2, -1);
@@ -39,7 +60,8 @@ void init(void) {
     srand(time(NULL));
 }
 
-void game(void) {
+bool game(void) {
+    timeout(0);
     unsigned long score = 0;
 
     unsigned x_pos = COLS/2;
@@ -52,7 +74,7 @@ void game(void) {
 
     refresh();
 
-    while(running) {
+    while(true) {
         score++;
         speed++;
         attron(COLOR_PAIR(3) | A_BOLD);
@@ -60,7 +82,7 @@ void game(void) {
         mvprintw(1, 0, "Speed : %u mps", speed/100);
         attroff(COLOR_PAIR(3) | A_BOLD);
         
-        update_borders(borders);
+        update_borders(borders, score);
 
         if(x_pos <= borders[LINES - 1] || x_pos >= borders[LINES - 1] + width) {
             attron(A_BOLD | COLOR_PAIR(4));
@@ -73,9 +95,8 @@ void game(void) {
             attroff(A_BOLD | COLOR_PAIR(2));
 
             attron(A_ITALIC | COLOR_PAIR(2));
-            mvprintw(LINES/2 + 2, COLS/2 - 8, "Press p to close the game.");
+            mvprintw(LINES/2 + 2, COLS/2 - 16, "Press 'p' to close the game or 'r' to restart");
             attroff(A_ITALIC | COLOR_PAIR(2));
-            running = false;
             break;
         }
 
@@ -89,11 +110,13 @@ void game(void) {
     timeout(-1);
     int input = getch();
     while(input != 'p') {
+        if(input == 'r' || input == 'R') {
+            return true;
+        }
         input = getch();
-        refresh();
     }
 
-    endwin();
+    return false;
 }
 
 void initialize_borders(unsigned *borders) {
@@ -107,7 +130,7 @@ void initialize_borders(unsigned *borders) {
     attroff(COLOR_PAIR(2));
 }
 
-void update_borders(unsigned *borders) {
+void update_borders(unsigned *borders, unsigned score) {
     for(int i = 0; i < LINES; i++) {
          mvaddch(i, borders[i], ' ');
         mvaddch(i, borders[i] + width, ' ');
@@ -122,6 +145,10 @@ void update_borders(unsigned *borders) {
         borders[0]++;
     } else if(rdn == 2 && borders[0] > 0) {
         borders[0]--;
+    }
+
+    if(COLS/5 - score/100 > (unsigned)COLS/6) {
+        width = COLS/5 - score/500;
     }
 
     attron(COLOR_PAIR(2));
@@ -146,4 +173,14 @@ void moov_cursor(int key, unsigned *x_pos, unsigned *borders) {
             mvaddch(LINES - 1, *x_pos, '^');
             attroff(COLOR_PAIR(1));
         }
+}
+
+void clear_screen(void) {
+    for(int i = 0; i < LINES; i++) {
+        for(int j = 0; j < COLS; j++) {
+            attron(COLOR_PAIR(1));
+            mvaddch(i, j, ' ');
+            attroff(COLOR_PAIR(1));
+        }
+    }
 }
