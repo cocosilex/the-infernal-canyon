@@ -228,12 +228,12 @@ void initialize_borders(unsigned *borders) {
         }
     }
 
-    attron(COLOR_PAIR(2));
+    attron((mode == -1 ? COLOR_PAIR(3) : (mode == 0 ? COLOR_PAIR(5) : COLOR_PAIR(2))));
     for(int i = 0; i < LINES; i++) {
         mvaddch(i, borders[i], ACS_BLOCK);
         mvaddch(i, borders[i] + width, ACS_BLOCK);
     }
-    attroff(COLOR_PAIR(2));
+    attroff((mode == -1 ? COLOR_PAIR(3) : (mode == 0 ? COLOR_PAIR(5) : COLOR_PAIR(2))));
 }
 
 void update_borders(unsigned *borders, unsigned score) {
@@ -257,12 +257,12 @@ void update_borders(unsigned *borders, unsigned score) {
         width = base_width - score/350;
     }
 
-    attron(COLOR_PAIR(2));
+    attron((mode == -1 ? COLOR_PAIR(3) : (mode == 0 ? COLOR_PAIR(5) : COLOR_PAIR(2))));
     for(int i = 0; i < LINES; i++) {
         mvaddch(i, borders[i], ACS_BLOCK);
         mvaddch(i, borders[i] + width, ACS_BLOCK);
     }
-    attroff(COLOR_PAIR(2));
+    attroff((mode == -1 ? COLOR_PAIR(3) : (mode == 0 ? COLOR_PAIR(5) : COLOR_PAIR(2))));
 }
 
 void moov_cursor(int key, unsigned *x_pos, unsigned *borders) {
