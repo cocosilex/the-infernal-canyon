@@ -1,17 +1,25 @@
 #include <ncurses.h>
+#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <locale.h>
 
-unsigned width = 30;
-unsigned speed = 5000;
+int mode = 0; // DO NOT CHANGE
+
+unsigned width = 40;
+unsigned base_width = 40;
+unsigned final_width = 20;
+
+unsigned speed = 20000;
 bool continue_to_play = true;
 
 
 void init(void);
 void start_menu(void);
+void update_base_stats(void);
+void show_difficulties(void);
 bool game(void);
 void check_cheat(void);
 void initialize_borders(unsigned *borders);
@@ -30,8 +38,8 @@ int main() {
             continue_to_play = false;
         } else {
             erase();
-            speed = 5000;
-            width = COLS/5;
+            speed = 20000;
+            update_base_stats();
         }    
     }
 
@@ -55,7 +63,6 @@ void init(void) {
     init_pair(4, 52, -1);
     init_pair(5, 43, -1);
 
-    width = COLS/5;
     srand(time(NULL));
 }
 
@@ -76,16 +83,80 @@ void start_menu(void) {
     mvprintw(LINES/2 - LINES/10 + 1, COLS/2 - 35, "The speed of the game is progressive, starting at 50 mps or 'move per second' of the grid.");
     mvprintw(LINES/2 - LINES/10 + 2, COLS/2 - 13, "The score is incremented by one at each move of the grid.");
     mvprintw(LINES/2 - LINES/10 + 4, COLS/2 - 7, "Press 'r' to start playing");
+    mvprintw(LINES/2 - LINES/10 + 5, COLS/2 - 18, "Select the mod you want to play using 'q' and 'd'");
     attroff(A_ITALIC | COLOR_PAIR(5));
+
+    show_difficulties();
 
     int key = getch();
     while(key != 'r' && key != 'R') {
+        if((key == 'Q' || key == 'q') && (mode == 0 || mode == 1)) {
+            mode--;
+        } else if((key == 'D' || key == 'd') && (mode == -1 || mode == 0)) {
+            mode++;
+        }
+
+        show_difficulties();
+        refresh();
         key = getch();
     }
 
     erase();
 }
 
+void show_difficulties(void) {
+    attron(COLOR_PAIR(3));
+    if(mode == - 1) {
+        attron(A_UNDERLINE);
+        mvprintw(LINES/2 - LINES/10 + 10, COLS/2 - 15, "Easy");
+        mvprintw(LINES/2 - LINES/10 + 11, COLS/2 - 19, "Score : x1");
+       attroff(A_UNDERLINE);
+    } else {
+        mvprintw(LINES/2 - LINES/10 + 10, COLS/2 - 15, "Easy");
+        mvprintw(LINES/2 - LINES/10 + 11, COLS/2 - 19, "Score : x1");
+    }
+    attroff(COLOR_PAIR(3));
+
+    attron(COLOR_PAIR(5));
+    if(mode == 0) {
+        attron(A_UNDERLINE);
+        mvprintw(LINES/2 - LINES/10 + 10, COLS/2, "Normal");
+        mvprintw(LINES/2 - LINES/10 + 11, COLS/2 - 2, "Score : x2");
+        attroff(A_UNDERLINE);
+    } else {
+        mvprintw(LINES/2 - LINES/10 + 10, COLS/2, "Normal");
+        mvprintw(LINES/2 - LINES/10 + 11, COLS/2 - 2, "Score : x2");
+    }
+    attroff(COLOR_PAIR(5));
+
+    attron(COLOR_PAIR(2));
+    if(mode == 1) {
+        attron(A_UNDERLINE);
+        mvprintw(LINES/2 - LINES/10 + 10, COLS/2 + 17, "Hard");
+        mvprintw(LINES/2 - LINES/10 + 11, COLS/2 + 15, "Score : x3");
+        attroff(A_UNDERLINE);
+    } else {
+        mvprintw(LINES/2 - LINES/10 + 10, COLS/2 + 17, "Hard");
+        mvprintw(LINES/2 - LINES/10 + 11, COLS/2 + 15, "Score : x3");
+    }
+    attroff(COLOR_PAIR(2));
+}
+
+void update_base_stats(void) {
+    if(mode == -1) {
+        width = 50;
+        base_width = 50;
+        final_width = 25;
+    } else if(mode == 0) {
+        width  = 40;
+        base_width = 40;
+        final_width = 20;
+    } else if (mode == 1) {
+        width = 30;
+        base_width = 30;
+        final_width = 15;
+    } 
+}
 bool game(void) {
     check_cheat();
     timeout(0);
@@ -104,9 +175,17 @@ bool game(void) {
     while(true) {
         score++;
         speed++;
+        if(mode == 0) {
+            score++;
+        } else if(mode == 1) {
+            score += 2;
+        }
+
+        char *mode_text = (mode == -1 ? "Easy" : (mode == 0 ? "Normal" : "Hard"));
         attron(COLOR_PAIR(3) | A_BOLD);
-        mvprintw(0, 0, "Score : %lu", score);
-        mvprintw(1, 0, "Speed : %u mps", speed/100);
+        mvprintw(0, 0, "Mode : %s", mode_text);
+        mvprintw(1, 0, "Score : %lu", score);
+        mvprintw(2, 0, "Speed : %u mps", speed/500);
         attroff(COLOR_PAIR(3) | A_BOLD);
         
         update_borders(borders, score);
@@ -120,7 +199,7 @@ bool game(void) {
         moov_cursor(key, &x_pos, borders);
 
         refresh();
-        napms(100000/speed);
+        napms(500000/speed);
     }
 
     timeout(-1);
@@ -174,8 +253,8 @@ void update_borders(unsigned *borders, unsigned score) {
         borders[0]--;
     }
 
-    if(COLS/5 - score/100 > (unsigned)COLS/6) {
-        width = COLS/5 - score/500;
+    if(width - score/350 > final_width) {
+        width = base_width - score/350;
     }
 
     attron(COLOR_PAIR(2));
