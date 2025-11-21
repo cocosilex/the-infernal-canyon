@@ -32,6 +32,7 @@ int main() {
     init();
 
     start_menu();
+    update_base_stats();
     while (continue_to_play) {
         bool will_to_continue = game();
         if(!will_to_continue) {
@@ -133,11 +134,11 @@ void show_difficulties(void) {
     if(mode == 1) {
         attron(A_UNDERLINE);
         mvprintw(LINES/2 - LINES/10 + 10, COLS/2 + 17, "Hard");
-        mvprintw(LINES/2 - LINES/10 + 11, COLS/2 + 15, "Score : x3");
+        mvprintw(LINES/2 - LINES/10 + 11, COLS/2 + 15, "Score : x4");
         attroff(A_UNDERLINE);
     } else {
         mvprintw(LINES/2 - LINES/10 + 10, COLS/2 + 17, "Hard");
-        mvprintw(LINES/2 - LINES/10 + 11, COLS/2 + 15, "Score : x3");
+        mvprintw(LINES/2 - LINES/10 + 11, COLS/2 + 15, "Score : x4");
     }
     attroff(COLOR_PAIR(2));
 }
@@ -146,7 +147,7 @@ void update_base_stats(void) {
     if(mode == -1) {
         width = 50;
         base_width = 50;
-        final_width = 25;
+        final_width = 20;
     } else if(mode == 0) {
         width  = 40;
         base_width = 40;
@@ -154,7 +155,7 @@ void update_base_stats(void) {
     } else if (mode == 1) {
         width = 30;
         base_width = 30;
-        final_width = 15;
+        final_width = 18;
     } 
 }
 bool game(void) {
@@ -178,7 +179,7 @@ bool game(void) {
         if(mode == 0) {
             score++;
         } else if(mode == 1) {
-            score += 2;
+            score += 3;
         }
 
         char *mode_text = (mode == -1 ? "Easy" : (mode == 0 ? "Normal" : "Hard"));
