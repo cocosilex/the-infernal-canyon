@@ -204,11 +204,20 @@ bool game(void) {
     }
 
     timeout(-1);
+    show_difficulties();
+    refresh();
     int input = getch();
     while(input != 'p') {
-        if(input == 'r' || input == 'R') {
+        if((input == 'Q' || input == 'q') && (mode == 0 || mode == 1)) {
+            mode--;
+        } else if((input == 'D' || input == 'd') && (mode == -1 || mode == 0)) {
+            mode++;
+        } else if(input == 'r' || input == 'R') {
             return true;
         }
+
+        show_difficulties();
+        refresh();
         input = getch();
     }
 
