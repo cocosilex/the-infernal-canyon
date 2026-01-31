@@ -263,7 +263,7 @@ void update_borders(unsigned *borders, unsigned score) {
         borders[0]--;
     }
 
-    if(base_width - score/350 > final_width) {
+    if(base_width > score/350 && base_width - score/350 > final_width) {
         width = base_width - score/350;
     }
 
