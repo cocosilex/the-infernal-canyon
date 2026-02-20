@@ -10,3 +10,6 @@ Only a tiny amount of key are useful :
 - q/Q : move left
 - d/D : move right
 - p : quit the game from the "Game Over" screen
+
+## Showcase 
+![](https://github.com/cocosilex/the-infernal-canyon/blob/main/the_infernal_canyon.gif)
